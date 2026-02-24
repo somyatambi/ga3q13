@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "start": "node scraper.js"
+    "start": "node scrape.js"
   },
   "dependencies": {
     "playwright": "^1.46.0"
