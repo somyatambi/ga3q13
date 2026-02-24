@@ -1,56 +1,49 @@
-const { chromium } = require("playwright");
+from playwright.sync_api import sync_playwright
 
-const seeds = [58,59,60,61,62,63,64,65,66,67];
-const base = "https://sanand0.github.io/tdsdata/js_table/?seed=";
+# Replace these placeholders with the actual URLs from your assignment page!
+URLS = [
+    "URL_FOR_SEED_58",
+    "URL_FOR_SEED_59",
+    "URL_FOR_SEED_60",
+    "URL_FOR_SEED_61",
+    "URL_FOR_SEED_62",
+    "URL_FOR_SEED_63",
+    "URL_FOR_SEED_64",
+    "URL_FOR_SEED_65",
+    "URL_FOR_SEED_66",
+    "URL_FOR_SEED_67"
+]
 
-function extractNumbers(text) {
-  if (!text) return [];
-  const matches = text.match(/-?\d+(?:\.\d+)?/g);
-  if (!matches) return [];
-  return matches.map(Number).filter(Number.isFinite);
-}
+def main():
+    total_sum = 0
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        
+        for url in URLS:
+            print(f"Visiting {url}...")
+            page.goto(url)
+            
+            # Extract and sum all numbers from table cells (td)
+            page_sum = page.evaluate("""() => {
+                let sum = 0;
+                document.querySelectorAll('td').forEach(cell => {
+                    let val = parseFloat(cell.innerText.trim());
+                    if (!isNaN(val)) {
+                        sum += val;
+                    }
+                });
+                return sum;
+            }""")
+            
+            print(f"Sum for this page: {page_sum}")
+            total_sum += page_sum
+            
+        browser.close()
+        
+    print("=" * 20)
+    print(f"TOTAL SUM: {total_sum}")
+    print("=" * 20)
 
-async function computePageSum(page) {
-  // Wait for JS to finish rendering
-  await page.waitForSelector("table", { timeout: 30000 });
-  await page.waitForLoadState("networkidle");
-
-  // Only extract from table cells (not headers)
-  const cellTexts = await page.$$eval("table td", cells =>
-    cells.map(c => c.innerText.trim())
-  );
-
-  let sum = 0;
-  for (const text of cellTexts) {
-    const nums = text.match(/-?\d+(?:\.\d+)?/g);
-    if (nums) {
-      for (const n of nums) {
-        sum += Number(n);
-      }
-    }
-  }
-
-  return sum;
-}
-
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-
-  let grandTotal = 0;
-
-  for (const seed of seeds) {
-    const url = `${base}${seed}`;
-    await page.goto(url, { waitUntil: "domcontentloaded" });
-
-    const pageSum = await computePageSum(page);
-
-    grandTotal += pageSum;
-    console.log(`seed=${seed} pageSum=${pageSum}`);
-  }
-
-  console.log(`Total sum=${grandTotal}`);
-  console.log(`Sum=${grandTotal}`);
-
-  await browser.close();
-})();
+if __name__ == "__main__":
+    main()
